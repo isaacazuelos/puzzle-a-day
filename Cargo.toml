@@ -1,0 +1,17 @@
+[package]
+name = "puzzle-a-day"
+version = "0.1.0"
+authors = ["Isaac Azuelos <isaac@azuelos.ca>"]
+edition = "2018"
+
+description = "A solver for DragonFjord's A-Puzzle-A-Day"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+chrono = "0.4"
+
+[dependencies.clap]
+version = "2.33"
+features = ["wrap_help"]
