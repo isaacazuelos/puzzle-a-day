@@ -1,10 +1,15 @@
 //! A solver for DragonFjord's A-Puzzle-A-Day.
 
+mod game;
+mod mask;
+
 use std::process::exit;
 
 // Using a full-fat date and time library is a bit overkill, but I think it's
 // fun to have it correctly handle leap years and such.
-use chrono::{Local, NaiveDate};
+use chrono::{Datelike, Local, NaiveDate};
+
+use crate::game::Game;
 
 const LONG_HELP: &str =
     "Solve for a specified date. The date must be formatted similar to \
@@ -33,10 +38,11 @@ fn main() {
         Local::now().naive_local().date()
     };
 
-    println!(
-        "solving boards isn't yet implemented, but we would solve for {}",
-        date
-    );
+    let mut game = Game::for_date(date.month0(), date.day0());
+
+    game.solve();
+
+    println!("{}", game);
 }
 
 /// Parse a date in the correct `YYYY-MM-DD` format. There's not much the
