@@ -8,8 +8,7 @@ A solver for [DragonFjord's A-Puzzle-A-Day][puzzle].
 
 Clone this repository with `git` and use `cargo` to build and install.
 
-While in development, the most recent version of `stable` is targeted, but
-older versions may work.
+Development targeted stable 1.53, but older versions may work.
 
 ```sh
 git clone https://github.com/isaacazuelos/puzzle-a-day
