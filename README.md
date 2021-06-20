@@ -12,7 +12,7 @@ Development targeted stable 1.53, but older versions may work.
 
 ```sh
 git clone https://github.com/isaacazuelos/puzzle-a-day
-cd zenith
+cd puzzle-a-day
 cargo install --path=.
 ```
 
