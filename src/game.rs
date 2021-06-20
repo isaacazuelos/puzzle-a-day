@@ -57,7 +57,7 @@ impl Game {
     pub fn solve(&mut self) {
         if let Some(piece) = self.first_unplaced_piece() {
             for position in piece.positions() {
-                if self.place(piece, position) {
+                if self.place(piece, *position) {
                     self.solve();
                     if self.all_pieces_placed() {
                         return;

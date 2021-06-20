@@ -1,9 +1,6 @@
 //! Descriptions of individual game pieces, and how they can be positioned on
 //! the game board.
 
-// TODO: We should save the results of [`Piece::positions`], since our recursive
-//       [`Game::solve`] calls it _many_ times on the same piece.
-
 // TODO: If we position [`Piece::base_mask`] so that their charity is flipped by
 //       [`Mask::vertical_flip`], we can use 1- or 2-instruction flips instead
 //       of the 20-some instruction [`Mask::transpose`] in [`Piece::positions`]
@@ -14,9 +11,7 @@
 // TODO: We don't worry about rotational symmetry for some pieces like Z, so
 //       there are duplicate positions calculated.
 
-// TODO: if we sort position masks by their bits as a u64, we're (loosely)
-//       grouping them up at the top right. This should speed up searching as a
-//       search space reordering.
+use lazy_static::lazy_static;
 
 use crate::mask::Mask;
 
@@ -39,6 +34,19 @@ pub enum Piece {
     Z,
 }
 
+lazy_static! {
+    static ref POSITIONS: [Vec<Mask>; Piece::COUNT] = [
+        Piece::C.calculate_positions(),
+        Piece::Gamma.calculate_positions(),
+        Piece::L.calculate_positions(),
+        Piece::Lamedh.calculate_positions(),
+        Piece::O.calculate_positions(),
+        Piece::P.calculate_positions(),
+        Piece::T.calculate_positions(),
+        Piece::Z.calculate_positions(),
+    ];
+}
+
 impl Piece {
     /// The number of different types of pieces.
     pub const COUNT: usize = 8;
@@ -55,8 +63,14 @@ impl Piece {
     ///
     /// This includes each rotation, and flipped over if the piece is chiral
     /// (see [`Piece::is_chiral`]).
+    pub fn positions(&self) -> &[Mask] {
+        &POSITIONS[*self as usize]
+    }
+
+    /// Calculates each possible position that a piece could be in on the board.
     ///
-    pub fn positions(&self) -> Vec<Mask> {
+    /// This is used to populate the [`POSITIONS`] tables used by the solver.
+    fn calculate_positions(self) -> Vec<Mask> {
         let mut positions = Vec::new();
         let (width, height) = self.size();
         let mask = self.base_mask();
@@ -87,6 +101,14 @@ impl Piece {
                 }
             }
         }
+
+        // We sort position masks by their bits to (loosely) push them into the
+        // top right. This should speed up searching by ruling out a lot of
+        // collisions early.
+        //
+        // In my extremely unscientific test, commenting this out nearly doubles
+        // running time.
+        positions.sort();
         positions
     }
 

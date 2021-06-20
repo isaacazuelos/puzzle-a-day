@@ -17,7 +17,7 @@ use std::ops::{BitAnd, BitOr, Not, Sub};
 ///
 /// This is used to represent how pieces might overlap, and quickly test for
 /// collisions.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, PartialOrd, Ord)]
 pub struct Mask(u64);
 
 impl Mask {
