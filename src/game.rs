@@ -86,12 +86,7 @@ impl Game {
     /// collisions before placing, we know that if all pieces are placed the
     /// game board is solved.
     fn all_pieces_placed(&self) -> bool {
-        for piece in self.pieces {
-            if piece == Mask::BLANK {
-                return false;
-            }
-        }
-        true
+        self.first_unplaced_piece().is_none()
     }
 
     /// Places the piece in the position given, if there's room to do so.
@@ -153,5 +148,58 @@ impl std::fmt::Display for Game {
 mod tests {
     use super::*;
 
-    // TODO: write tests
+    #[test]
+    fn for_date() {
+        let game = Game::for_date(11, 24);
+        assert_eq!(game.date, Mask::BLANK.set(1, 5).set(5, 3));
+    }
+
+    #[test]
+    fn first() {
+        let game = Game::for_date(11, 24);
+        let first = game.first_unplaced_piece();
+        assert!(first.is_some());
+    }
+
+    #[test]
+    fn place() {
+        let mut game = Game::for_date(11, 24);
+        let piece = game.first_unplaced_piece().unwrap();
+        let positions = piece.positions();
+
+        // game should be blank, no piece is too big to fit in the top right on
+        // christmas.
+        assert!(game.place(piece, positions[0]));
+    }
+
+    #[test]
+    fn collide() {
+        let mut game = Game::for_date(11, 24);
+        assert!(!game.place(Piece::C, game.frame));
+    }
+
+    #[test]
+    fn remove() {
+        let mut game = Game::for_date(11, 24);
+        let piece = game.first_unplaced_piece().unwrap();
+        let positions = piece.positions();
+
+        // game should be blank, no piece is too big to fit in the top right on
+        // christmas.
+        assert!(game.place(piece, positions[0]));
+        game.remove(piece);
+        assert!(game.pieces[piece as usize] == Mask::BLANK);
+    }
+
+    #[test]
+    fn solve_test() {
+        // Solving takes time in debug builds, so we try to cram a lot of tests
+        // in here.
+        let mut game = Game::for_date(11, 24);
+
+        game.solve();
+
+        assert!(game.all_pieces_placed());
+        assert_eq!(game.first_unplaced_piece(), None);
+    }
 }
