@@ -19,9 +19,9 @@ cargo install --path=.
 ## Usage
 
 Run the script with no arguments to solve for today's date, or with `--date` to
-specify a date in [ISO 8601][date-format].
+specify a date in [ISO8601][date-format].
 
-[date-format][https://en.wikipedia.org/wiki/ISO_8601]
+[date-format]: https://en.wikipedia.org/wiki/ISO_8601
 
 See the `--help` for more information.
 
