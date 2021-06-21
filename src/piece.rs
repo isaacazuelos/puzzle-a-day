@@ -8,9 +8,6 @@
 //       relatively costly mask operations. We still have to transpose twice for
 //       rotations at least, if we use bit reverse for the 180 rotation.
 
-// TODO: We don't worry about rotational symmetry for some pieces like Z, so
-//       there are duplicate positions calculated.
-
 use lazy_static::lazy_static;
 
 use crate::mask::Mask;
@@ -109,6 +106,7 @@ impl Piece {
         // In my extremely unscientific test, commenting this out nearly doubles
         // running time.
         positions.sort();
+        positions.dedup();
         positions
     }
 
