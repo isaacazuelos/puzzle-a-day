@@ -9,7 +9,7 @@
 // probably do anyway) because the whole operation will probably fit in
 // registers while they're a lot of instructions, they're all quick and linear.
 
-use std::ops::{BitAnd, BitOr, Not, Sub};
+use std::ops::{BitAnd, BitOr};
 
 /// A mask is an 8x8 bit board.
 ///
@@ -194,41 +194,32 @@ impl BitOr<Mask> for Mask {
     }
 }
 
-impl Not for Mask {
-    type Output = Mask;
+// We don't need to print Masks in release builds, but this is useful for
+// debugging and testing.
+#[cfg(not(feature = "release"))]
+mod not_release {
+    use super::Mask;
 
-    #[inline]
-    fn not(self) -> Self::Output {
-        Mask(!self.0)
-    }
-}
-
-impl Sub for Mask {
-    type Output = Mask;
-
-    #[inline]
-    fn sub(self, rhs: Self) -> Self::Output {
-        Mask(self.0 & !rhs.0)
-    }
-}
-
-impl std::fmt::Debug for Mask {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // https://www.youtube.com/watch?v=Svd9qMlV9wU
-        write!(f, "Mask({:064b})", self.0)
-    }
-}
-
-impl std::fmt::Display for Mask {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        for r in 0..8 {
-            for c in 0..8 {
-                let c = if self.get(r, c) { '•' } else { '-' };
-                write!(f, "{}", c)?;
-            }
-            writeln!(f)?;
+    #[cfg(not(feature = "release"))]
+    impl std::fmt::Debug for Mask {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            // https://www.youtube.com/watch?v=Svd9qMlV9wU
+            write!(f, "Mask({:064b})", self.0)
         }
-        Ok(())
+    }
+
+    #[cfg(not(feature = "release"))]
+    impl std::fmt::Display for Mask {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            for r in 0..8 {
+                for c in 0..8 {
+                    let c = if self.get(r, c) { '•' } else { '-' };
+                    write!(f, "{}", c)?;
+                }
+                writeln!(f)?;
+            }
+            Ok(())
+        }
     }
 }
 
@@ -236,7 +227,7 @@ impl std::fmt::Display for Mask {
 mod tests {
     use super::*;
 
-    // There aren't tests for the std::ops impls because they're so
+    // There aren't tests for the std::ops implementations because they're so
     // straight-forward.
 
     #[test]
