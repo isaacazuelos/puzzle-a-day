@@ -9,7 +9,7 @@
 // probably do anyway) because the whole operation will probably fit in
 // registers while they're a lot of instructions, they're all quick and linear.
 
-use std::ops::{BitAnd, BitOr};
+use std::ops::{BitAnd, BitOr, BitOrAssign, SubAssign};
 
 /// A mask is an 8x8 bit board.
 ///
@@ -29,6 +29,9 @@ impl Mask {
 
     /// A mask with no squares set.
     pub const BLANK: Mask = Mask(0);
+
+    /// A mask with all squares set.
+    pub const FULL: Mask = Mask(!0);
 
     /// Get a bit at a specific row and column.
     #[inline]
@@ -185,12 +188,26 @@ impl BitAnd<Mask> for Mask {
     }
 }
 
+impl BitOrAssign<Mask> for Mask {
+    #[inline]
+    fn bitor_assign(&mut self, rhs: Mask) {
+        *self = Mask(self.0 | rhs.0);
+    }
+}
+
 impl BitOr<Mask> for Mask {
     type Output = Mask;
 
     #[inline]
     fn bitor(self, rhs: Mask) -> Mask {
         Mask(self.0 | rhs.0)
+    }
+}
+
+impl SubAssign for Mask {
+    #[inline]
+    fn sub_assign(&mut self, rhs: Mask) {
+        *self = Mask(self.0 & !rhs.0);
     }
 }
 

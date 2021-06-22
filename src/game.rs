@@ -13,12 +13,8 @@ use crate::piece::Piece;
 ///
 /// Each [`Piece`] can only be placed once.
 ///
-/// An invariant is that no bit is set in more than one of the masks.
+/// No bit is set in more than one of the [`Game::piece`] masks.
 pub struct Game {
-    /// Our game board is smaller than a 8x8 grid. This mask outlines the
-    /// boarders of our game board.
-    frame: Mask,
-
     /// The squares where we can't put pieces, because they mark the date we're
     /// trying to solve for.
     date: Mask,
@@ -27,6 +23,17 @@ pub struct Game {
     /// to index this and get the [`Mask`] marking it's position on the board. A
     /// piece isn't placed if it's corresponding mask is [`Mask::BLANK`].
     pieces: [Mask; Piece::COUNT],
+
+    /// A mask showing all placed pieces, used to check for collisions when
+    /// trying to put down more pieces when solving.
+    ///
+    /// This is stored instead of doing a bitwise or on each piece in
+    /// [`Game::pieces`] as that actually ended up being a significant amount of
+    /// the program's execution time in profiling.
+    placed: Mask,
+
+    /// The index of the next piece in [`Piece::ALL`].
+    next_piece_index: usize,
 }
 
 impl Game {
@@ -47,18 +54,23 @@ impl Game {
         let date = Mask::for_day(day) | Mask::for_month(month);
 
         Game {
-            frame: Mask::FRAME,
             date,
             pieces: [Mask::BLANK; 8],
+            placed: date | Mask::FRAME,
+            next_piece_index: 0,
         }
     }
 
     /// A recursive, depth-first search to solve the game board.
     pub fn solve(&mut self) {
-        if let Some(piece) = self.first_unplaced_piece() {
+        if self.next_piece_index < Piece::COUNT {
+            let piece = Piece::ALL[self.next_piece_index];
+            self.next_piece_index += 1;
+
             for position in piece.positions() {
                 if self.place(piece, *position) {
                     self.solve();
+
                     if self.all_pieces_placed() {
                         return;
                     } else {
@@ -66,18 +78,9 @@ impl Game {
                     }
                 }
             }
-        }
-    }
 
-    /// The first piece which is has not yet been placed on the game board, if
-    /// there is one.
-    fn first_unplaced_piece(&self) -> Option<Piece> {
-        for piece in Piece::ALL {
-            if self.pieces[piece as usize] == Mask::BLANK {
-                return Some(piece);
-            }
+            self.next_piece_index -= 1;
         }
-        None
     }
 
     /// Have all pieces been placed?
@@ -86,18 +89,15 @@ impl Game {
     /// collisions before placing, we know that if all pieces are placed the
     /// game board is solved.
     fn all_pieces_placed(&self) -> bool {
-        self.first_unplaced_piece().is_none()
+        self.placed == Mask::FULL
     }
 
     /// Places the piece in the position given, if there's room to do so.
     /// Returns `true` if the piece was placed, and `false` if it could not be
     /// placed.
     fn place(&mut self, piece: Piece, position: Mask) -> bool {
-        let currently_filled = self.date
-            | self.frame
-            | self.pieces.iter().fold(Mask::BLANK, |a, b| a | *b);
-
-        if (position & currently_filled) == Mask::BLANK {
+        if (position & self.placed) == Mask::BLANK {
+            self.placed |= position;
             self.pieces[piece as usize] = position;
             true
         } else {
@@ -107,6 +107,7 @@ impl Game {
 
     /// Remove a piece from board.
     fn remove(&mut self, piece: Piece) {
+        self.placed -= self.pieces[piece as usize];
         self.pieces[piece as usize] = Mask::BLANK;
     }
 
@@ -114,7 +115,7 @@ impl Game {
     /// when rendering to the terminal, mostly used by the [`std::fmt::Display`]
     /// `impl`.
     fn display_character(&self, row: usize, column: usize) -> char {
-        if self.frame.get(row, column) {
+        if Mask::FRAME.get(row, column) {
             return Game::FRAME_DISPLAY;
         }
 
@@ -155,16 +156,9 @@ mod tests {
     }
 
     #[test]
-    fn first() {
-        let game = Game::for_date(11, 24);
-        let first = game.first_unplaced_piece();
-        assert!(first.is_some());
-    }
-
-    #[test]
     fn place() {
         let mut game = Game::for_date(11, 24);
-        let piece = game.first_unplaced_piece().unwrap();
+        let piece = Piece::ALL[0];
         let positions = piece.positions();
 
         // game should be blank, no piece is too big to fit in the top right on
@@ -175,18 +169,18 @@ mod tests {
     #[test]
     fn collide() {
         let mut game = Game::for_date(11, 24);
-        assert!(!game.place(Piece::C, game.frame));
+        assert!(!game.place(Piece::C, Mask::FRAME));
     }
 
     #[test]
     fn remove() {
         let mut game = Game::for_date(11, 24);
-        let piece = game.first_unplaced_piece().unwrap();
-        let positions = piece.positions();
+        let piece = Piece::ALL[0];
+        let position = piece.positions()[0];
 
         // game should be blank, no piece is too big to fit in the top right on
         // christmas.
-        assert!(game.place(piece, positions[0]));
+        assert!(game.place(piece, position));
         game.remove(piece);
         assert!(game.pieces[piece as usize] == Mask::BLANK);
     }
@@ -200,6 +194,5 @@ mod tests {
         game.solve();
 
         assert!(game.all_pieces_placed());
-        assert_eq!(game.first_unplaced_piece(), None);
     }
 }
